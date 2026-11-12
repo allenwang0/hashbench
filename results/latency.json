@@ -1,0 +1,190 @@
+{
+ "context": {
+  "compiler": "Apple LLVM 21.0.0 (clang-2100.4.1.1)",
+  "cxx_flags": "-O3 -DNDEBUG",
+  "slots": 1048576,
+  "seed": 20261110,
+  "batch": 64,
+  "batches": 50000,
+  "passes": 5,
+  "clock_tick_ns": 41.0
+ },
+ "rows": [
+  {
+   "table": "LinearMap",
+   "load": 0.5,
+   "lookup": "hit",
+   "p50_ns": 7.812,
+   "p90_ns": 10.406,
+   "p99_ns": 13.672
+  },
+  {
+   "table": "LinearMap",
+   "load": 0.5,
+   "lookup": "miss",
+   "p50_ns": 12.375,
+   "p90_ns": 14.328,
+   "p99_ns": 20.188
+  },
+  {
+   "table": "LinearMap",
+   "load": 0.7,
+   "lookup": "hit",
+   "p50_ns": 9.766,
+   "p90_ns": 11.719,
+   "p99_ns": 13.672
+  },
+  {
+   "table": "LinearMap",
+   "load": 0.7,
+   "lookup": "miss",
+   "p50_ns": 18.875,
+   "p90_ns": 20.828,
+   "p99_ns": 37.766
+  },
+  {
+   "table": "RobinHoodMap",
+   "load": 0.5,
+   "lookup": "hit",
+   "p50_ns": 6.516,
+   "p90_ns": 8.453,
+   "p99_ns": 9.766
+  },
+  {
+   "table": "RobinHoodMap",
+   "load": 0.5,
+   "lookup": "miss",
+   "p50_ns": 9.766,
+   "p90_ns": 11.062,
+   "p99_ns": 12.375
+  },
+  {
+   "table": "RobinHoodMap",
+   "load": 0.7,
+   "lookup": "hit",
+   "p50_ns": 13.016,
+   "p90_ns": 14.984,
+   "p99_ns": 16.938
+  },
+  {
+   "table": "RobinHoodMap",
+   "load": 0.7,
+   "lookup": "miss",
+   "p50_ns": 14.984,
+   "p90_ns": 16.281,
+   "p99_ns": 17.578
+  },
+  {
+   "table": "RobinHoodMap",
+   "load": 0.85,
+   "lookup": "hit",
+   "p50_ns": 22.797,
+   "p90_ns": 26.047,
+   "p99_ns": 30.609
+  },
+  {
+   "table": "RobinHoodMap",
+   "load": 0.85,
+   "lookup": "miss",
+   "p50_ns": 19.531,
+   "p90_ns": 20.844,
+   "p99_ns": 22.141
+  },
+  {
+   "table": "SwissMap",
+   "load": 0.5,
+   "lookup": "hit",
+   "p50_ns": 3.906,
+   "p90_ns": 5.859,
+   "p99_ns": 8.469
+  },
+  {
+   "table": "SwissMap",
+   "load": 0.5,
+   "lookup": "miss",
+   "p50_ns": 2.609,
+   "p90_ns": 3.906,
+   "p99_ns": 5.859
+  },
+  {
+   "table": "SwissMap",
+   "load": 0.7,
+   "lookup": "hit",
+   "p50_ns": 4.547,
+   "p90_ns": 5.219,
+   "p99_ns": 6.516
+  },
+  {
+   "table": "SwissMap",
+   "load": 0.7,
+   "lookup": "miss",
+   "p50_ns": 6.516,
+   "p90_ns": 8.469,
+   "p99_ns": 10.406
+  },
+  {
+   "table": "SwissMap",
+   "load": 0.85,
+   "lookup": "hit",
+   "p50_ns": 5.859,
+   "p90_ns": 7.812,
+   "p99_ns": 11.062
+  },
+  {
+   "table": "SwissMap",
+   "load": 0.85,
+   "lookup": "miss",
+   "p50_ns": 14.969,
+   "p90_ns": 16.281,
+   "p99_ns": 17.578
+  },
+  {
+   "table": "std::unordered_map",
+   "load": 0.5,
+   "lookup": "hit",
+   "p50_ns": 10.422,
+   "p90_ns": 13.031,
+   "p99_ns": 20.828
+  },
+  {
+   "table": "std::unordered_map",
+   "load": 0.5,
+   "lookup": "miss",
+   "p50_ns": 11.062,
+   "p90_ns": 14.312,
+   "p99_ns": 16.922
+  },
+  {
+   "table": "std::unordered_map",
+   "load": 0.7,
+   "lookup": "hit",
+   "p50_ns": 14.328,
+   "p90_ns": 16.922,
+   "p99_ns": 20.172
+  },
+  {
+   "table": "std::unordered_map",
+   "load": 0.7,
+   "lookup": "miss",
+   "p50_ns": 17.578,
+   "p90_ns": 21.484,
+   "p99_ns": 24.75
+  },
+  {
+   "table": "std::unordered_map",
+   "load": 0.85,
+   "lookup": "hit",
+   "p50_ns": 17.578,
+   "p90_ns": 20.844,
+   "p99_ns": 24.734
+  },
+  {
+   "table": "std::unordered_map",
+   "load": 0.85,
+   "lookup": "miss",
+   "p50_ns": 22.781,
+   "p90_ns": 28.641,
+   "p99_ns": 34.5
+  }
+ ]
+}

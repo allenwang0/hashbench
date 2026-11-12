@@ -1,0 +1,47 @@
+{
+ "schema_version": 1,
+ "repo": "hashbench",
+ "sha": "0836fb6e9cc07ae951925c5ba0960d9d339037e6",
+ "generated_at": "2026-11-12T05:47:26Z",
+ "command": "scripts/run_bench.sh",
+ "data_note": "Synthetic keys from a fixed seed (20261110), 1048576 slots, uniform 64-bit keys, one machine.",
+ "metric": {
+  "label": "SwissMap p99 unsuccessful lookup at load 0.70",
+  "value": 10.41,
+  "unit": "ns",
+  "higher_is_better": false
+ },
+ "takeaway": "SwissMap p99 miss lookup 10.4 ns at load 0.70 vs 24.8 ns for std::unordered_map.",
+ "chart": {
+  "type": "interval",
+  "x_label": "Unsuccessful lookup latency at load 0.70 (p50, p90, p99)",
+  "x_unit": "ns",
+  "x_scale": "linear",
+  "rows": [
+   {
+    "label": "LinearMap",
+    "low": 18.88,
+    "mid": 20.83,
+    "high": 37.77
+   },
+   {
+    "label": "RobinHoodMap",
+    "low": 14.98,
+    "mid": 16.28,
+    "high": 17.58
+   },
+   {
+    "label": "SwissMap",
+    "low": 6.52,
+    "mid": 8.47,
+    "high": 10.41
+   },
+   {
+    "label": "std::unordered_map",
+    "low": 17.58,
+    "mid": 21.48,
+    "high": 24.75
+   }
+  ]
+ }
+}

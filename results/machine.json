@@ -1,0 +1,6 @@
+{
+ "cpu": "Apple M5 Pro",
+ "logical_cpus": 15,
+ "os": "Darwin 27.0.0",
+ "arch": "arm64"
+}
