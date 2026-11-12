@@ -33,9 +33,8 @@ void run_program(std::uint64_t seed, KeyShape shape) {
   std::unordered_map<std::uint64_t, std::uint64_t> ref;
   std::vector<std::uint64_t> seen_keys;
   for (int step = 0; step < kOpsPerSeed; ++step) {
-    std::uint64_t key = (!seen_keys.empty() && rng() % 2)
-                            ? seen_keys[rng() % seen_keys.size()]
-                            : draw_key(rng, shape);
+    std::uint64_t key = (!seen_keys.empty() && rng() % 2) ? seen_keys[rng() % seen_keys.size()]
+                                                          : draw_key(rng, shape);
     unsigned op = static_cast<unsigned>(rng() % 100);
     if (op < 45) {
       std::uint64_t v = rng();
@@ -74,7 +73,8 @@ class FuzzTest : public ::testing::Test {};
 TYPED_TEST_SUITE(FuzzTest, AllMaps, MapNames);
 
 TYPED_TEST(FuzzTest, MatchesUnorderedMapOnSmallKeyRange) {
-  for (std::uint64_t s = 0; s < kSeeds; ++s) run_program<TypeParam>(1000 + s, KeyShape::kSmallRange);
+  for (std::uint64_t s = 0; s < kSeeds; ++s)
+    run_program<TypeParam>(1000 + s, KeyShape::kSmallRange);
 }
 
 TYPED_TEST(FuzzTest, MatchesUnorderedMapOnClusteredKeys) {

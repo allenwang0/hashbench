@@ -46,6 +46,7 @@ void measure(const char* name, double load, bool hit) {
   m.rehash(bench::kSlots);
   for (std::uint64_t k : keys) m.insert_or_assign(k, k);
   auto probes = hit ? keys : bench::make_miss_keys(bench::Dist::kUniform, n, bench::kSeed);
+  std::shuffle(probes.begin(), probes.end(), std::mt19937_64(bench::kSeed + 1));
 
   std::vector<double> per_op(kBatches);
   std::size_t i = 0;
@@ -66,9 +67,10 @@ void measure(const char* name, double load, bool hit) {
   double p50 = percentile(per_op, 0.50);
   double p90 = percentile(per_op, 0.90);
   double p99 = percentile(per_op, 0.99);
-  std::printf("%s    {\"table\": \"%s\", \"load\": %.2f, \"lookup\": \"%s\", "
-              "\"p50_ns\": %.3f, \"p90_ns\": %.3f, \"p99_ns\": %.3f}",
-              first_row ? "" : ",\n", name, load, hit ? "hit" : "miss", p50, p90, p99);
+  std::printf(
+      "%s    {\"table\": \"%s\", \"load\": %.2f, \"lookup\": \"%s\", "
+      "\"p50_ns\": %.3f, \"p90_ns\": %.3f, \"p99_ns\": %.3f}",
+      first_row ? "" : ",\n", name, load, hit ? "hit" : "miss", p50, p90, p99);
   first_row = false;
 }
 
@@ -81,11 +83,12 @@ void measure_all(const char* name) {
 }  // namespace
 
 int main() {
-  std::printf("{\n  \"context\": {\"compiler\": \"%s\", \"cxx_flags\": \"%s\", \"slots\": %zu, "
-              "\"seed\": %llu, \"batch\": %zu, \"batches\": %zu, \"clock_tick_ns\": %.2f},\n"
-              "  \"rows\": [\n",
-              __VERSION__, HB_CXX_FLAGS, bench::kSlots,
-              static_cast<unsigned long long>(bench::kSeed), kBatch, kBatches, clock_tick_ns());
+  std::printf(
+      "{\n  \"context\": {\"compiler\": \"%s\", \"cxx_flags\": \"%s\", \"slots\": %zu, "
+      "\"seed\": %llu, \"batch\": %zu, \"batches\": %zu, \"clock_tick_ns\": %.2f},\n"
+      "  \"rows\": [\n",
+      __VERSION__, HB_CXX_FLAGS, bench::kSlots, static_cast<unsigned long long>(bench::kSeed),
+      kBatch, kBatches, clock_tick_ns());
   measure_all<hashbench::LinearMap>("LinearMap");
   measure_all<hashbench::RobinHoodMap>("RobinHoodMap");
   measure_all<hashbench::SwissMap>("SwissMap");

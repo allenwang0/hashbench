@@ -1,8 +1,8 @@
+#include <gtest/gtest.h>
+
 #include <cstdint>
 #include <random>
 #include <vector>
-
-#include <gtest/gtest.h>
 
 #include "hashbench/robin_hood_map.h"
 

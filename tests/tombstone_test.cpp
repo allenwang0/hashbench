@@ -1,6 +1,6 @@
-#include <cstdint>
-
 #include <gtest/gtest.h>
+
+#include <cstdint>
 
 #include "hashbench/linear_map.h"
 #include "hashbench/swiss_map.h"

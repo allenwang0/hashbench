@@ -6,7 +6,8 @@
 #include "hashbench/robin_hood_map.h"
 #include "hashbench/swiss_map.h"
 
-using AllMaps = ::testing::Types<hashbench::LinearMap, hashbench::RobinHoodMap, hashbench::SwissMap>;
+using AllMaps =
+    ::testing::Types<hashbench::LinearMap, hashbench::RobinHoodMap, hashbench::SwissMap>;
 
 class MapNames {
  public:

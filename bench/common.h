@@ -49,7 +49,8 @@ enum class Dist { kUniform, kSequential };
 inline const char* dist_name(Dist d) { return d == Dist::kUniform ? "uniform" : "sequential"; }
 
 // Keys that will be stored: distinct, bit 63 clear. Uniform keys are random
-// 63-bit values; sequential keys are 1..n.
+// 63-bit values; sequential keys are 1..n in order. Lookup benchmarks shuffle
+// their probe order so they measure random access for both distributions.
 inline std::vector<std::uint64_t> make_keys(Dist d, std::size_t n, std::uint64_t seed) {
   std::vector<std::uint64_t> keys(n);
   if (d == Dist::kSequential) {

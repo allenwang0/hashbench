@@ -35,6 +35,7 @@ void lookup(benchmark::State& state, Dist d, double load, bool hit) {
   Map m;
   if (!fill(state, m, keys)) return;
   auto probes = hit ? keys : bench::make_miss_keys(d, n, bench::kSeed);
+  std::shuffle(probes.begin(), probes.end(), std::mt19937_64(bench::kSeed + 1));
   std::size_t i = 0;
   std::uint64_t found = 0;
   for (auto _ : state) {
@@ -42,7 +43,8 @@ void lookup(benchmark::State& state, Dist d, double load, bool hit) {
     if (++i == probes.size()) i = 0;
   }
   benchmark::DoNotOptimize(found);
-  if (found != (hit ? std::uint64_t(state.iterations()) : 0)) state.SkipWithError("lookup result mismatch");
+  if (found != (hit ? std::uint64_t(state.iterations()) : 0))
+    state.SkipWithError("lookup result mismatch");
   state.counters["load"] = double(m.size()) / double(m.capacity());
 }
 
@@ -97,9 +99,9 @@ void register_table(const std::string& name) {
     }
     for (int lg : kInsertLog2) {
       std::size_t n = std::size_t{1} << lg;
-      benchmark::RegisterBenchmark("insert/" + tail + std::to_string(n),
-                                   [=](benchmark::State& s) { insert<Map>(s, d, n); })
-          ->Unit(benchmark::kMillisecond);
+      benchmark::RegisterBenchmark("insert/" + tail + std::to_string(n), [=](benchmark::State& s) {
+        insert<Map>(s, d, n);
+      })->Unit(benchmark::kMillisecond);
     }
   }
 }
