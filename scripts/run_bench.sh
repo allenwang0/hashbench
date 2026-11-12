@@ -10,9 +10,9 @@ cmake --build --preset release
 
 mkdir -p results/raw
 ./build/release/hb_bench \
-  --benchmark_repetitions=3 \
+  --benchmark_repetitions=5 \
+  --benchmark_enable_random_interleaving=true \
   --benchmark_report_aggregates_only=true \
-  --benchmark_min_time=0.2s \
   --benchmark_out=results/raw/bench.json \
   --benchmark_out_format=json
 ./build/release/hb_latency > results/raw/latency.json

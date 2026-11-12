@@ -29,7 +29,7 @@ def synthetic_bench(skip=()):
         if (op, table) in skip:
             continue
         out.append({"run_name": f"{op}/{table}/{dist}/{param}", "run_type": "aggregate",
-                    "aggregate_name": "median", "repetitions": 3, "real_time": t,
+                    "aggregate_name": "min", "repetitions": 3, "real_time": t,
                     "time_unit": unit, "final_capacity": 1 << 20})
     return {"context": {"compiler": "synthetic", "cxx_flags": "-O3", "slots": str(1 << 20)},
             "benchmarks": out}
@@ -40,7 +40,7 @@ def synthetic_latency():
              "p99_ns": 30.0 + 2 * i}
             for i, t in enumerate(mr.TABLES) for load in (0.5, 0.7) for lk in ("hit", "miss")]
     return {"context": {"compiler": "synthetic", "cxx_flags": "-O3", "slots": 1 << 20, "seed": 1,
-                        "batch": 64, "batches": 100, "clock_tick_ns": 41.0}, "rows": rows}
+                        "batch": 64, "batches": 100, "passes": 1, "clock_tick_ns": 41.0}, "rows": rows}
 
 
 MACHINE = {"cpu": "synthetic CPU", "logical_cpus": 1, "os": "test", "arch": "test"}

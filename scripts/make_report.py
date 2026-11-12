@@ -29,15 +29,15 @@ def load_results(results_dir):
     return read("bench.json"), read("latency.json"), read("machine.json")
 
 
-def medians(bench):
-    """Map (op, table, dist, param) -> median benchmark entry."""
+def fastest(bench):
+    """Map (op, table, dist, param) -> the "min" aggregate (fastest repetition)."""
     out = {}
     for b in bench["benchmarks"]:
-        if b.get("run_type") == "aggregate" and b.get("aggregate_name") != "median":
+        if b.get("run_type") == "aggregate" and b.get("aggregate_name") != "min":
             continue
         if b.get("error_occurred"):
             continue
-        op, table, dist, param = b["run_name"].split("/")
+        op, table, dist, param = b["run_name"].split("/")[:4]
         out[(op, table, dist, param)] = b
     return out
 
@@ -370,7 +370,7 @@ def interval_figure(title, takeaway, rows, x_label):
 
 
 def build_page(bench, latency, machine, command, sha, generated_at):
-    med = medians(bench)
+    med = fastest(bench)
     ctx = bench["context"]
     figs = []
     for dist in ("uniform", "sequential"):
@@ -398,11 +398,11 @@ def build_page(bench, latency, machine, command, sha, generated_at):
         ("Machine", f"{machine['cpu']}, {machine['logical_cpus']} logical CPUs, {machine['os']} ({machine['arch']})"),
         ("Compiler", ctx.get("compiler", lc["compiler"])),
         ("Flags", f"{ctx.get('cxx_flags', lc['cxx_flags'])}, C++20"),
-        ("Run", f"{generated_at}, commit {sha[:12]}, median of {bench['benchmarks'][0].get('repetitions', 1)} repetitions"),
+        ("Run", f"{generated_at}, commit {sha[:12]}, fastest of {bench['benchmarks'][0].get('repetitions', 1)} interleaved repetitions"),
         ("Data", f"Synthetic keys from seed {lc['seed']}. Lookups and churn use a fixed table of "
                  f"{lc['slots']:,} slots; load factor is the only variable."),
         ("Latency", f"Each sample times a batch of {lc['batch']} lookups and divides by {lc['batch']} "
-                    f"({lc['batches']:,} batches); the clock ticks every {lc['clock_tick_ns']:.0f} ns, too "
+                    f"({lc['batches']:,} batches; best of {lc['passes']} passes by median); the clock ticks every {lc['clock_tick_ns']:.0f} ns, too "
                     f"coarse for single lookups."),
         ("Command", command),
     ]

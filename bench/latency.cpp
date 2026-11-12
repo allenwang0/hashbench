@@ -16,6 +16,7 @@ namespace {
 using Clock = std::chrono::steady_clock;
 constexpr std::size_t kBatch = 64;
 constexpr std::size_t kBatches = 50'000;
+constexpr int kPasses = 5;
 constexpr double kLoads[] = {0.5, 0.7, 0.85};
 
 double percentile(std::vector<double>& v, double p) {
@@ -48,22 +49,34 @@ void measure(const char* name, double load, bool hit) {
   auto probes = hit ? keys : bench::make_miss_keys(bench::Dist::kUniform, n, bench::kSeed);
   std::shuffle(probes.begin(), probes.end(), std::mt19937_64(bench::kSeed + 1));
 
-  std::vector<double> per_op(kBatches);
+  // Several passes; keep the one with the lowest median, the pass least
+  // disturbed by other processes on a shared machine.
+  std::vector<double> best;
+  double best_p50 = 1e300;
   std::size_t i = 0;
   std::uint64_t found = 0;
-  for (std::size_t b = 0; b < kBatches; ++b) {
-    auto t0 = Clock::now();
-    for (std::size_t j = 0; j < kBatch; ++j) {
-      found += m.find(probes[i]) != nullptr;
-      if (++i == probes.size()) i = 0;
+  for (int pass = 0; pass < kPasses; ++pass) {
+    std::vector<double> per_op(kBatches);
+    for (std::size_t b = 0; b < kBatches; ++b) {
+      auto t0 = Clock::now();
+      for (std::size_t j = 0; j < kBatch; ++j) {
+        found += m.find(probes[i]) != nullptr;
+        if (++i == probes.size()) i = 0;
+      }
+      auto t1 = Clock::now();
+      per_op[b] = std::chrono::duration<double, std::nano>(t1 - t0).count() / double(kBatch);
     }
-    auto t1 = Clock::now();
-    per_op[b] = std::chrono::duration<double, std::nano>(t1 - t0).count() / double(kBatch);
+    std::vector<double> copy = per_op;
+    if (double p = percentile(copy, 0.50); p < best_p50) {
+      best_p50 = p;
+      best = std::move(per_op);
+    }
   }
-  if (found != (hit ? kBatch * kBatches : 0)) {
+  if (found != (hit ? kBatch * kBatches * kPasses : 0)) {
     std::fprintf(stderr, "lookup result mismatch for %s\n", name);
     std::exit(1);
   }
+  std::vector<double>& per_op = best;
   double p50 = percentile(per_op, 0.50);
   double p90 = percentile(per_op, 0.90);
   double p99 = percentile(per_op, 0.99);
@@ -85,10 +98,11 @@ void measure_all(const char* name) {
 int main() {
   std::printf(
       "{\n  \"context\": {\"compiler\": \"%s\", \"cxx_flags\": \"%s\", \"slots\": %zu, "
-      "\"seed\": %llu, \"batch\": %zu, \"batches\": %zu, \"clock_tick_ns\": %.2f},\n"
+      "\"seed\": %llu, \"batch\": %zu, \"batches\": %zu, \"passes\": %d, \"clock_tick_ns\": "
+      "%.2f},\n"
       "  \"rows\": [\n",
       __VERSION__, HB_CXX_FLAGS, bench::kSlots, static_cast<unsigned long long>(bench::kSeed),
-      kBatch, kBatches, clock_tick_ns());
+      kBatch, kBatches, kPasses, clock_tick_ns());
   measure_all<hashbench::LinearMap>("LinearMap");
   measure_all<hashbench::RobinHoodMap>("RobinHoodMap");
   measure_all<hashbench::SwissMap>("SwissMap");

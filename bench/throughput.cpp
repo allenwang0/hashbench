@@ -2,6 +2,7 @@
 // scripts/make_report.py can parse them.
 #include <benchmark/benchmark.h>
 
+#include <algorithm>
 #include <cstdio>
 #include <deque>
 #include <string>
@@ -14,6 +15,14 @@ using bench::Dist;
 
 constexpr double kLoads[] = {0.25, 0.5, 0.7, 0.85};
 constexpr int kInsertLog2[] = {10, 13, 16, 19, 22};
+// Fixed iteration counts: letting Google Benchmark search for a count would
+// rerun the table fill (the slow part) once per trial.
+constexpr benchmark::IterationCount kLookupIters = 1 << 24;
+constexpr benchmark::IterationCount kChurnIters = 1 << 21;
+
+// On a shared machine a repetition can be slowed by other processes; the
+// fastest repetition is the best estimate of the uncontended cost.
+double fastest(const std::vector<double>& v) { return *std::min_element(v.begin(), v.end()); }
 
 template <class Map>
 bool fill(benchmark::State& state, Map& m, const std::vector<std::uint64_t>& keys) {
@@ -91,17 +100,24 @@ void register_table(const std::string& name) {
       char l[16];
       std::snprintf(l, sizeof l, "%.2f", load);
       benchmark::RegisterBenchmark("lookup_hit/" + tail + l,
-                                   [=](benchmark::State& s) { lookup<Map>(s, d, load, true); });
+                                   [=](benchmark::State& s) { lookup<Map>(s, d, load, true); })
+          ->Iterations(kLookupIters)
+          ->ComputeStatistics("min", fastest);
       benchmark::RegisterBenchmark("lookup_miss/" + tail + l,
-                                   [=](benchmark::State& s) { lookup<Map>(s, d, load, false); });
+                                   [=](benchmark::State& s) { lookup<Map>(s, d, load, false); })
+          ->Iterations(kLookupIters)
+          ->ComputeStatistics("min", fastest);
       benchmark::RegisterBenchmark("churn/" + tail + l,
-                                   [=](benchmark::State& s) { churn<Map>(s, d, load); });
+                                   [=](benchmark::State& s) { churn<Map>(s, d, load); })
+          ->Iterations(kChurnIters)
+          ->ComputeStatistics("min", fastest);
     }
     for (int lg : kInsertLog2) {
       std::size_t n = std::size_t{1} << lg;
-      benchmark::RegisterBenchmark("insert/" + tail + std::to_string(n), [=](benchmark::State& s) {
-        insert<Map>(s, d, n);
-      })->Unit(benchmark::kMillisecond);
+      benchmark::RegisterBenchmark("insert/" + tail + std::to_string(n),
+                                   [=](benchmark::State& s) { insert<Map>(s, d, n); })
+          ->Unit(benchmark::kMillisecond)
+          ->ComputeStatistics("min", fastest);
     }
   }
 }
