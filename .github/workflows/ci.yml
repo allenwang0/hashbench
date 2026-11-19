@@ -29,8 +29,8 @@ jobs:
           - { name: ubuntu-gcc-14, os: ubuntu-24.04, cc: gcc-14, cxx: g++-14, preset: release }
           - { name: ubuntu-clang-18, os: ubuntu-24.04, cc: clang-18, cxx: clang++-18, preset: release }
           - { name: ubuntu-clang-18, os: ubuntu-24.04, cc: clang-18, cxx: clang++-18, preset: sanitize }
-          - { name: macos-clang, os: macos-14, cc: clang, cxx: clang++, preset: release }
-          - { name: macos-clang, os: macos-14, cc: clang, cxx: clang++, preset: sanitize }
+          - { name: macos-clang, os: macos-15, cc: clang, cxx: clang++, preset: release }
+          - { name: macos-clang, os: macos-15, cc: clang, cxx: clang++, preset: sanitize }
     env:
       CC: ${{ matrix.cc }}
       CXX: ${{ matrix.cxx }}

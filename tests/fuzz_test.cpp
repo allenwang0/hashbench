@@ -48,7 +48,9 @@ void run_program(std::uint64_t seed, KeyShape shape) {
       auto it = ref.find(key);
       const std::uint64_t* got = m.find(key);
       ASSERT_EQ(got != nullptr, it != ref.end()) << "seed " << seed << " step " << step;
-      if (got) ASSERT_EQ(*got, it->second);
+      if (got) {
+        ASSERT_EQ(*got, it->second);
+      }
     } else if (rng() % 50 == 0) {
       m.clear();
       ref.clear();
