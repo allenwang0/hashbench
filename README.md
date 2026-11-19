@@ -1,6 +1,6 @@
 # hashbench
 
-Three hash maps written from scratch in C++20 (linear probing, Robin Hood hashing and a Swiss-table style design), tested against `std::unordered_map` and benchmarked to show where each design wins. The Swiss-style map finds a key nearly 5x faster than the standard library.
+Three hash maps written from scratch in C++20 (linear probing, Robin Hood hashing and a Swiss-table style design), tested against `std::unordered_map` and benchmarked to show where each design wins. The Swiss-style map finds a random key several times faster than the standard library.
 
 ![Lookup time against load factor for the four tables](docs/report-light.png)
 
@@ -32,5 +32,5 @@ The full report is [site/index.html](site/index.html).
 
 ## Limitations
 
-- Results come from one machine (Apple M5 Pro) and one compiler.
+- Results come from one machine (Apple M5 Pro) and one compiler. Lookup ratios against `std::unordered_map` varied from about 3x to 5x between runs.
 - Keys and values are fixed at `uint64_t`; no iterators or custom allocators.
