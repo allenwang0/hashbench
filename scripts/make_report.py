@@ -380,13 +380,15 @@ def swar_svg(uid, width, group):
     for i, k in enumerate(kinds):
         x = i * cell
         cls = {"match": "c-accent", "empty": "c-band"}.get(k, "c-node-sunk")
+        dashed = ' style="stroke:var(--text-3);stroke-dasharray:3 2;fill:none"' if k == "empty" else ""
         parts.append(f'<rect x="{rk.coord(x + 2)}" y="28" width="{rk.coord(cell - 4)}" height="{rk.coord(cell - 4)}" rx="6" '
-                     f'class="{cls}"{" style=\"stroke:var(--text-3);stroke-dasharray:3 2;fill:none\"" if k == "empty" else ""}/>')
+                     f'class="{cls}"{dashed}/>')
         mark = {"full": "h2", "match": "h2", "empty": "", "deleted": "×"}[k]
         if mark:
+            on_fill = 'style="fill:var(--surface)" ' if k == "match" else ""
             parts.append(f'<text x="{rk.coord(x + cell / 2)}" y="{rk.coord(28 + cell / 2 + 1)}" '
                          f'class="{"c-label" if k != "match" else "c-value"}" text-anchor="middle" '
-                         f'{"style=\"fill:var(--surface)\" " if k == "match" else ""}>{mark}</text>')
+                         f'{on_fill}>{mark}</text>')
     mx = 3 * cell + cell / 2
     parts.append(f'<path class="c-line-accent" d="M{rk.coord(mx)} {rk.coord(28 + cell)}V{rk.coord(28 + cell + 14)}"/>')
     parts.append(rk.svg_text(min(mx, width - 150), 28 + cell + 30, "tag matches: compare this key", "c-label c-hi"))
