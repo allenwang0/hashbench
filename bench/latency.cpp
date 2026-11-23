@@ -2,6 +2,8 @@
 // the steady_clock tick on many machines, so the tool times batches of
 // kBatch lookups and reports batch time / kBatch. Percentiles therefore
 // describe 64-lookup averages, which hides some single-lookup outliers.
+// Every pass is reported; scripts/make_report.py takes the median across
+// passes so no pass is selected for being fast.
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -16,7 +18,7 @@ namespace {
 using Clock = std::chrono::steady_clock;
 constexpr std::size_t kBatch = 64;
 constexpr std::size_t kBatches = 50'000;
-constexpr int kPasses = 5;
+constexpr int kPasses = 10;
 constexpr double kLoads[] = {0.5, 0.7, 0.85};
 
 double percentile(std::vector<double>& v, double p) {
@@ -49,10 +51,7 @@ void measure(const char* name, double load, bool hit) {
   auto probes = hit ? keys : bench::make_miss_keys(bench::Dist::kUniform, n, bench::kSeed);
   std::shuffle(probes.begin(), probes.end(), std::mt19937_64(bench::kSeed + 1));
 
-  // Several passes; keep the one with the lowest median, the pass least
-  // disturbed by other processes on a shared machine.
-  std::vector<double> best;
-  double best_p50 = 1e300;
+  std::vector<double> p50, p90, p99;
   std::size_t i = 0;
   std::uint64_t found = 0;
   for (int pass = 0; pass < kPasses; ++pass) {
@@ -66,24 +65,28 @@ void measure(const char* name, double load, bool hit) {
       auto t1 = Clock::now();
       per_op[b] = std::chrono::duration<double, std::nano>(t1 - t0).count() / double(kBatch);
     }
-    std::vector<double> copy = per_op;
-    if (double p = percentile(copy, 0.50); p < best_p50) {
-      best_p50 = p;
-      best = std::move(per_op);
-    }
+    p50.push_back(percentile(per_op, 0.50));
+    p90.push_back(percentile(per_op, 0.90));
+    p99.push_back(percentile(per_op, 0.99));
   }
   if (found != (hit ? kBatch * kBatches * kPasses : 0)) {
     std::fprintf(stderr, "lookup result mismatch for %s\n", name);
     std::exit(1);
   }
-  std::vector<double>& per_op = best;
-  double p50 = percentile(per_op, 0.50);
-  double p90 = percentile(per_op, 0.90);
-  double p99 = percentile(per_op, 0.99);
+  auto list = [](const std::vector<double>& v) {
+    std::string s = "[";
+    char buf[32];
+    for (std::size_t k = 0; k < v.size(); ++k) {
+      std::snprintf(buf, sizeof buf, "%s%.3f", k ? ", " : "", v[k]);
+      s += buf;
+    }
+    return s + "]";
+  };
   std::printf(
       "%s    {\"table\": \"%s\", \"load\": %.2f, \"lookup\": \"%s\", "
-      "\"p50_ns\": %.3f, \"p90_ns\": %.3f, \"p99_ns\": %.3f}",
-      first_row ? "" : ",\n", name, load, hit ? "hit" : "miss", p50, p90, p99);
+      "\"p50_ns\": %s, \"p90_ns\": %s, \"p99_ns\": %s}",
+      first_row ? "" : ",\n", name, load, hit ? "hit" : "miss", list(p50).c_str(),
+      list(p90).c_str(), list(p99).c_str());
   first_row = false;
 }
 
