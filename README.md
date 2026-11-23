@@ -9,7 +9,7 @@ Three hash maps written from scratch in C++20 — linear probing, Robin Hood has
 ## Highlights
 
 <!-- results:start -->
-- **4.05× faster lookups** for SwissMap than `std::unordered_map` at 70% full: 3.6 ns vs 14.6 ns, random keys, median of 10 runs on an Apple M5 Pro.
+- **4.05× faster lookups** for SwissMap than `std::unordered_map` at 70% full: 3.6 ns vs 14.6 ns, random keys, median of 10 runs on an Apple M5 Pro.
 - **SIMD-style probing in plain C++**: SwissMap checks 8 slots at once with bit tricks on one 64-bit integer, no CPU-specific instructions.
 - **Fuzzed**: 12,000,000 random operations per map (20 seeds × 200,000 × 3 key shapes), checked step by step against `std::unordered_map`, also under ASan and UBSan.
 

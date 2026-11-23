@@ -35,7 +35,7 @@ def reps(op, table, dist, param):
 
 
 def text_of(page):
-    return html.unescape(re.sub(r"<[^>]+>", "", page)).replace(" ", " ")
+    return html.unescape(re.sub(r"<[^>]+>", "", page)).replace("\u2009", " ").replace("\u202f", " ")
 
 
 class ReportTest(unittest.TestCase):

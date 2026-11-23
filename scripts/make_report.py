@@ -39,7 +39,7 @@ BASELINE = "std::unordered_map"
 HERO_LOAD = "0.70"
 README_START = "<!-- results:start -->"
 README_END = "<!-- results:end -->"
-THIN = " "
+THIN = "\u202f"  # narrow no-break space: a number never wraps away from its unit
 DIST_LABEL = {"uniform": "random", "sequential": "sequential"}
 
 
@@ -252,7 +252,7 @@ def band_chart(d, uid, width, height, tables, op="lookup_hit", dist="uniform"):
             series.append((t, pts))
     narrow = width < 420
     label_w = max(rk.text_width(t, 12 if narrow else 13) for t, _ in series) + 14
-    ml, mr, mt, mb = 40, label_w, 30, 46
+    ml, mr, mt, mb = 40, 16 if narrow else label_w, 52 if narrow else 30, 46
     ymax = max(s["max"] for _, pts in series for _, s in pts)
     yt = rk.nice_ticks(0, ymax, 5)
     xs = [float(p) for p in loads]
@@ -285,9 +285,18 @@ def band_chart(d, uid, width, height, tables, op="lookup_hit", dist="uniform"):
     ends.sort(key=lambda e: e[0])
     for i in range(1, len(ends)):
         ends[i][0] = max(ends[i][0], ends[i - 1][0] + 15)
-    for y, x, t, accent in ends:
-        parts.append(rk.svg_text(x, y, t, "c-label c-hi" if accent else "c-label"))
-    parts.append(rk.svg_text(ml, 14, "ns per lookup (median; band = min–max)" if not narrow else "ns per lookup", "c-title"))
+    if narrow:  # too little room for end labels: a legend above the plot, in plotting order
+        lx = 0.0
+        for _, _, t, accent in sorted(ends, key=lambda e: not e[3]):
+            cls = "c-line-accent" if accent else "c-stroke-muted"
+            parts.append(f'<path class="{cls}" stroke-width="2" d="M{rk.coord(lx)} 34H{rk.coord(lx + 16)}"/>')
+            parts.append(rk.svg_text(lx + 21, 38, t, "c-label c-hi" if accent else "c-label"))
+            lx += 21 + rk.text_width(t, 12) + 18
+    else:
+        for y, x, t, accent in ends:
+            parts.append(rk.svg_text(x, y, t, "c-label c-hi" if accent else "c-label"))
+    parts.append(rk.svg_text(ml if not narrow else 0, 14, "ns per lookup (median; band = min–max)"
+                             if not narrow else "ns per lookup (median, min–max band)", "c-title"))
     parts.append(rk.svg_text(width - mr, height - 8, "Load factor (entries ÷ slots)", "c-title", "end"))
     desc = "; ".join(f"{t}: " + ", ".join(f"{x * 100:.0f}% {fmt_ns(s['median'])} ns" for x, s in pts) for t, pts in series)
     return rk.svg(uid, width, height, f"Median successful lookup time by load factor, {DIST_LABEL[dist]} keys",
@@ -301,7 +310,7 @@ def ladder(d, uid, width):
     name_w = 0 if narrow else max(rk.text_width(t) for t, _ in rows) + 16
     row_h = 46 if narrow else 34
     top = 44
-    plot_l, plot_r = name_w, width - 56
+    plot_l, plot_r = name_w or 12, width - 56
     xt = rk.nice_ticks(0, max(s["p99"] for _, s in rows) * 1.05, 5)
     x = lambda v: plot_l + (plot_r - plot_l) * v / xt[-1]
     bottom = top + row_h * len(rows)
@@ -335,7 +344,8 @@ def ladder(d, uid, width):
         parts.append(f'<circle cx="{rk.coord(x(s["p99"]))}" cy="{rk.coord(cy)}" r="4.5" class="{stroke}" stroke-width="2" style="fill:var(--surface)"/>')
         parts.append(rk.svg_text(x(s["p99"]) + 9, cy + 4, fmt_ns(s["p99"]), "c-tick"))
         parts.append("</g>")
-    parts.append(f'<path class="c-axis" d="M{rk.coord(plot_l)} {top - 8}V{rk.coord(bottom)}"/>')
+    if not narrow:  # on a phone the labels sit above the rows, where an axis line would cross them
+        parts.append(f'<path class="c-axis" d="M{rk.coord(plot_l)} {top - 8}V{rk.coord(bottom)}"/>')
     parts.append(rk.svg_text(plot_r, bottom + 36, "ns per lookup (64-lookup batch average), axis from zero", "c-title", "end")
                  if not narrow else rk.svg_text(plot_r, bottom + 36, "ns per lookup, from zero", "c-title", "end"))
     desc = "; ".join(f"{t} p50 {fmt_ns(s['p50'])}, p90 {fmt_ns(s['p90'])}, p99 {fmt_ns(s['p99'])} ns" for t, s in rows)
@@ -493,6 +503,11 @@ def evidence_rows(d, facts, src_sha, res_sha):
     ]
 
 
+def prose(content):
+    """Body paragraph held to the reading measure."""
+    return rk.tag("p", content, class_="prose")
+
+
 def toc(items):
     """Tier B inline contents list: the kit's nav style, not sticky."""
     lis = rk.join(Raw(f'<li>{rk.tag("a", label, href="#" + sid)}</li>') for sid, label in items)
@@ -588,14 +603,14 @@ def build_page(bench, latency, machine, command, src_sha, res_sha):
     design_rows.append([Raw(f"<code>{esc(BASELINE)}</code>"), "Linked list per bucket (separate chaining)",
                         "1.0 (default max_load_factor)"])
     design_body = rk.join([
-        rk.tag("p", Raw(f"All three maps store keys and values directly in one array (open addressing) and share one "
+        prose(Raw(f"All three maps store keys and values directly in one array (open addressing) and share one "
                         f"API. A key's hash picks a home slot; on a collision the map probes further slots until it "
                         f"finds the key or an empty slot. The baseline instead allocates a node per entry and chains "
                         f"nodes per bucket. Every measured lookup uses a table fixed at {slots:,} slots, so the load "
                         f"factor — entries ÷ slots — is the only variable.")),
         rk.table("The four tables and their growth limits", ["Table", "Collision rule", "Grows past load"],
                  design_rows, wrap_cols={1}),
-        rk.tag("p", Raw(f"LinearMap grows at {lin_num / lin_den * 100:.0f}% full, so it has no point at 85%. "
+        prose(Raw(f"LinearMap grows at {lin_num / lin_den * 100:.0f}% full, so it has no point at {load_pct(d['loads'][-1])}. "
                         f"Robin Hood and SwissMap allow {sw_num / sw_den * 100:.1f}%.")),
     ])
     design_sec = rk.section("design", "Open addressing keeps every entry in one array", design_body, eyebrow="Primer")
@@ -633,7 +648,7 @@ def build_page(bench, latency, machine, command, src_sha, res_sha):
     lookup_sec = rk.section(
         "lookup", head1, rk.join([
             fig1,
-            rk.tag("p", Raw(f"The baseline's median rises from {ns(std_band[0]['median'])} to "
+            prose(Raw(f"The baseline's median rises from {ns(std_band[0]['median'])} to "
                             f"{ns(std_band[-1]['median'])} across the same loads. Every lookup in it follows a "
                             f"pointer to a separately allocated node, and more entries mean more nodes competing "
                             f"for cache. The open-addressing maps read from one array, and {SUBJECT} usually needs "
@@ -694,11 +709,11 @@ def build_page(bench, latency, machine, command, src_sha, res_sha):
         data_href=bench_href)
     seq_lk = d["seq_lookup"][BASELINE]
     insert_text = rk.join([
-        rk.tag("p", Raw(f"The open-addressing maps pass every key through the splitmix64 finalizer, which spreads "
+        prose(Raw(f"The open-addressing maps pass every key through the splitmix64 finalizer, which spreads "
                         f"1, 2, 3, … across the table as if they were random.{R('E8')} The baseline uses "
                         f"<code>std::hash&lt;uint64_t&gt;</code> as a caller gets it; in libc++, the standard library "
                         f"Apple clang uses here, that hash returns the integer unchanged.")),
-        rk.tag("p", Raw(f"With an identity hash, consecutive keys land in consecutive buckets, so no two keys share "
+        prose(Raw(f"With an identity hash, consecutive keys land in consecutive buckets, so no two keys share "
                         f"a bucket and nodes allocated one after another sit near each other in memory. That is "
                         f"consistent with the sequential speed-up above and with sequential lookups at "
                         f"{load_pct(HERO_LOAD)} load taking {pct(seq_lk)} of the random-key time; the benchmark does "
@@ -710,15 +725,15 @@ def build_page(bench, latency, machine, command, src_sha, res_sha):
 
     # Correctness
     corr_body = rk.join([
-        rk.tag("p", Raw(f"A seeded random program of inserts, overwrites, erases, lookups and clears runs against "
+        prose(Raw(f"A seeded random program of inserts, overwrites, erases, lookups and clears runs against "
                         f"each map and <code>std::unordered_map</code> side by side; every return value and the size "
                         f"must agree after every step, and a final walk must visit exactly the reference's entries. "
                         f"That is {facts['fuzz_seeds']} seeds × {facts['fuzz_ops']:,} operations for each of "
                         f"{facts['fuzz_shapes']} key shapes (small range, keys with the low 20 bits zero, full 64-bit), "
                         f"{total_fuzz:,} operations per map.{R('E6')}")),
-        rk.tag("p", Raw("Separate tests check Robin Hood's ordering invariant after every operation, that tombstones "
-                        "stay bounded under churn, and growth and reserve behaviour. CI builds with GCC 14 and "
-                        "Clang 18 on Linux and Apple clang on macOS, and repeats the tests under AddressSanitizer and "
+        prose(Raw("Separate tests check Robin Hood's ordering invariant after every operation, that tombstones "
+                        "stay bounded under churn, and growth and reserve behaviour. CI builds with GCC and Clang "
+                        "on Linux and Apple clang on macOS, and repeats the tests under AddressSanitizer and "
                         "UndefinedBehaviorSanitizer.")),
     ])
     corr_sec = rk.section("correctness", f"Every map agrees with {BASELINE} on {count(total_fuzz)} random operations",
