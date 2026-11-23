@@ -35,7 +35,7 @@ def reps(op, table, dist, param):
 
 
 def text_of(page):
-    return html.unescape(re.sub(r"<[^>]+>", "", page)).replace("\u2009", " ").replace("\u202f", " ")
+    return html.unescape(re.sub(r"<[^>]+>", "", page))
 
 
 class ReportTest(unittest.TestCase):
@@ -63,7 +63,7 @@ class ReportTest(unittest.TestCase):
         hero = re.search(r'<p class="hero-metric"><span class="value">([^<]+)</span>', self.page)
         self.assertIsNotNone(hero, "hero metric missing")
         self.assertEqual(hero.group(1), f"{ratio:.2f}×")
-        self.assertIn(f"{statistics.median(sw):.1f} ns vs {statistics.median(std):.1f} ns per lookup, "
+        self.assertIn(f"{statistics.median(sw):.1f}\u00a0ns vs {statistics.median(std):.1f}\u00a0ns per lookup, "
                       f"median of {len(sw)} runs", self.text)
         if min(sw) != statistics.median(sw):
             self.assertNotIn(f"{min(std) / min(sw):.2f}×", self.text.split("Evidence ledger")[0][:4000],
@@ -74,7 +74,7 @@ class ReportTest(unittest.TestCase):
         row = next(r for r in rows if r["table"] == "SwissMap" and r["lookup"] == "miss" and r["load"] == 0.7)
         self.assertGreaterEqual(len(row["p99_ns"]), 10)
         self.assertIn(f"SwissMap p50 {statistics.median(row['p50_ns']):.1f}, p90 "
-                      f"{statistics.median(row['p90_ns']):.1f}, p99 {statistics.median(row['p99_ns']):.1f} ns",
+                      f"{statistics.median(row['p90_ns']):.1f}, p99 {statistics.median(row['p99_ns']):.1f}\u00a0ns",
                       self.text)
 
     def test_insert_and_sequential_effect_match_results(self):
@@ -102,7 +102,7 @@ class ReportTest(unittest.TestCase):
             self.assertEqual((self.tmp / name).read_text(), (ROOT / "site" / name).read_text(),
                              f"site/{name} is stale: run python3 scripts/make_report.py --readme README.md")
         self.assertEqual(self.readme, (ROOT / "README.md").read_text(), "README results block is stale")
-        self.assertNotIn("3.9 ns", self.readme, "old best-of-5 headline left in the README")
+        self.assertNotIn("3.9 ns", self.readme.replace("\u00a0", " "), "old best-of-5 headline left in the README")
 
     def test_card_validates(self):
         try:

@@ -39,7 +39,6 @@ BASELINE = "std::unordered_map"
 HERO_LOAD = "0.70"
 README_START = "<!-- results:start -->"
 README_END = "<!-- results:end -->"
-THIN = "\u202f"  # narrow no-break space: a number never wraps away from its unit
 DIST_LABEL = {"uniform": "random", "sequential": "sequential"}
 
 
@@ -152,7 +151,7 @@ def fmt_ns(v):
 
 
 def ns(v):
-    return f"{fmt_ns(v)}{THIN}ns"
+    return rk.num(fmt_ns(v), "ns")
 
 
 def ratio_text(v):
@@ -166,7 +165,7 @@ def pct(v):
 def count(n):
     n = int(n)
     if n >= 1_000_000:
-        return f"{n / 1e6:g}{THIN}M" if n % 1_000_000 == 0 else f"{n:,}"
+        return rk.num(f"{n / 1e6:g}", "M") if n % 1_000_000 == 0 else f"{n:,}"
     return f"{n:,}"
 
 
@@ -232,14 +231,14 @@ def hero_chart(d, uid, width):
              "lo": d["reps"][("lookup_hit", t, "uniform", HERO_LOAD)]["min"],
              "hi": d["reps"][("lookup_hit", t, "uniform", HERO_LOAD)]["max"], "accent": t == SUBJECT}
             for t in TABLES]
-    desc = "; ".join(f"{r['label']} median {fmt_ns(r['value'])} ns (range {fmt_ns(r['lo'])} to {fmt_ns(r['hi'])})"
+    desc = "; ".join(f"{r['label']} median {rk.num(fmt_ns(r['value']), 'ns')} (range {fmt_ns(r['lo'])} to {fmt_ns(r['hi'])})"
                      for r in rows) + f"; {d['n']} repetitions each."
     return rk.bar_chart(rows, uid=uid, width=width,
                         title=f"Median successful lookup time at {load_pct(HERO_LOAD)} load, random keys",
                         desc=desc,
                         axis_title="ns per lookup, bars from zero, whiskers min–max" if width >= 420
                         else "ns per lookup; whiskers min–max",
-                        fmt=lambda v: f"{fmt_ns(v)}{THIN}ns")
+                        fmt=lambda v: rk.num(fmt_ns(v), "ns"))
 
 
 def band_chart(d, uid, width, height, tables, op="lookup_hit", dist="uniform"):
@@ -298,7 +297,7 @@ def band_chart(d, uid, width, height, tables, op="lookup_hit", dist="uniform"):
     parts.append(rk.svg_text(ml if not narrow else 0, 14, "ns per lookup (median; band = min–max)"
                              if not narrow else "ns per lookup (median, min–max band)", "c-title"))
     parts.append(rk.svg_text(width - mr, height - 8, "Load factor (entries ÷ slots)", "c-title", "end"))
-    desc = "; ".join(f"{t}: " + ", ".join(f"{x * 100:.0f}% {fmt_ns(s['median'])} ns" for x, s in pts) for t, pts in series)
+    desc = "; ".join(f"{t}: " + ", ".join(f"{x * 100:.0f}% {rk.num(fmt_ns(s['median']), 'ns')}" for x, s in pts) for t, pts in series)
     return rk.svg(uid, width, height, f"Median successful lookup time by load factor, {DIST_LABEL[dist]} keys",
                   desc + f". Median of {d['n']} repetitions; band spans min to max.", "".join(parts))
 
@@ -348,10 +347,10 @@ def ladder(d, uid, width):
         parts.append(f'<path class="c-axis" d="M{rk.coord(plot_l)} {top - 8}V{rk.coord(bottom)}"/>')
     parts.append(rk.svg_text(plot_r, bottom + 36, "ns per lookup (64-lookup batch average), axis from zero", "c-title", "end")
                  if not narrow else rk.svg_text(plot_r, bottom + 36, "ns per lookup, from zero", "c-title", "end"))
-    desc = "; ".join(f"{t} p50 {fmt_ns(s['p50'])}, p90 {fmt_ns(s['p90'])}, p99 {fmt_ns(s['p99'])} ns" for t, s in rows)
+    desc = "; ".join(f"{t} p50 {fmt_ns(s['p50'])}, p90 {fmt_ns(s['p90'])}, p99 {rk.num(fmt_ns(s['p99']), 'ns')}" for t, s in rows)
     return rk.svg(uid, width, bottom + 44,
                   f"Unsuccessful lookup latency percentiles at {load_pct(d['lat_load'])} load",
-                  desc + f". Median across {d['passes']} passes; timer resolution about {res:.1f} ns per lookup.",
+                  desc + f". Median across {d['passes']} passes; timer resolution about {rk.num(format(res, '.1f'), 'ns')} per lookup.",
                   "".join(parts))
 
 
@@ -362,14 +361,14 @@ def insert_chart(d, uid, width):
             s = d["ins"][(t, dist)]
             rows.append({"label": f"{t}, {DIST_LABEL[dist]}", "value": s["median"], "lo": s["min"], "hi": s["max"],
                          "accent": t == SUBJECT})
-    desc = "; ".join(f"{r['label']} {fmt_ns(r['value'])} ns per key (range {fmt_ns(r['lo'])} to {fmt_ns(r['hi'])})"
+    desc = "; ".join(f"{r['label']} {rk.num(fmt_ns(r['value']), 'ns')} per key (range {fmt_ns(r['lo'])} to {fmt_ns(r['hi'])})"
                      for r in rows)
     return rk.bar_chart(rows, uid=uid, width=width,
                         title=f"Insert time per key, building {int(d['big']):,} keys from empty",
                         desc=desc + f"; median of {d['n']} repetitions.",
                         axis_title="ns per insert, growth included; bars from zero, whiskers min–max" if width >= 420
                         else "ns per insert; whiskers min–max",
-                        fmt=lambda v: f"{fmt_ns(v)}{THIN}ns")
+                        fmt=lambda v: rk.num(fmt_ns(v), "ns"))
 
 
 def swar_svg(uid, width, group):
@@ -403,8 +402,8 @@ def build_card(d, latency, command, sha, generated_at):
     sw = d["sw"]
     rows = [{"label": t, "low": round(s["min"], 2), "mid": round(s["median"], 2), "high": round(s["max"], 2)}
             for t in TABLES for s in [d["reps"][("lookup_hit", t, "uniform", HERO_LOAD)]]]
-    takeaway = (f"{SUBJECT} median lookup {fmt_ns(sw['median'])} ns at {load_pct(HERO_LOAD)} load vs "
-                f"{fmt_ns(d['std']['median'])} ns for {BASELINE} ({runs_text(d['n'])}).")
+    takeaway = (f"{SUBJECT} median lookup {rk.num(fmt_ns(sw['median']), 'ns')} at {load_pct(HERO_LOAD)} load vs "
+                f"{rk.num(fmt_ns(d['std']['median']), 'ns')} for {BASELINE} ({runs_text(d['n'])}).")
     return {
         "schema_version": 1,
         "repo": "hashbench",
@@ -442,7 +441,7 @@ def readme_block(d, facts, machine):
              "| --- | ---: | ---: |"]
     for t in TABLES:
         s = d["reps"][("lookup_hit", t, "uniform", HERO_LOAD)]
-        lines.append(f"| `{t}` | {fmt_ns(s['median'])} ns | {fmt_ns(d['ins'][(t, 'uniform')]['median'])} ns |")
+        lines.append(f"| `{t}` | {rk.num(fmt_ns(s['median']), 'ns')} | {rk.num(fmt_ns(d['ins'][(t, 'uniform')]['median']), 'ns')} |")
     lines.append("")
     lines.append(f"Random 64-bit keys; median of {d['n']} runs. Spread and load average are in the report.")
     lines.append(README_END)
@@ -508,12 +507,6 @@ def prose(content):
     return rk.tag("p", content, class_="prose")
 
 
-def toc(items):
-    """Tier B inline contents list: the kit's nav style, not sticky."""
-    lis = rk.join(Raw(f'<li>{rk.tag("a", label, href="#" + sid)}</li>') for sid, label in items)
-    return Raw(f'<nav class="report-nav" aria-label="Contents" style="position:static"><ul>{lis}</ul></nav>')
-
-
 def build_page(bench, latency, machine, command, src_sha, res_sha):
     d = derive(bench, latency, machine)
     facts = facts_from_sources()
@@ -549,9 +542,9 @@ def build_page(bench, latency, machine, command, src_sha, res_sha):
                                     hero_chart(d, "hero-p", 290))]),
     )
 
-    nav = toc([("findings", "Findings"), ("design", "Designs"), ("lookup", "Lookups"), ("misses", "Misses"),
-               ("inserts", "Inserts"), ("correctness", "Correctness"), ("methodology", "Method"),
-               ("limitations", "Limits"), ("reproduce", "Reproduce"), ("evidence", "Evidence")])
+    nav = rk.toc([("findings", "Findings"), ("design", "Designs"), ("lookup", "Lookups"), ("misses", "Misses"),
+                  ("inserts", "Inserts"), ("correctness", "Correctness"), ("methodology", "Method"),
+                  ("limitations", "Limits"), ("reproduce", "Reproduce"), ("evidence", "Evidence")])
 
     m_sw, m_std = d["miss"][SUBJECT], d["miss"][BASELINE]
     i_sw, i_std = d["ins"][(SUBJECT, "uniform")], d["ins"][(BASELINE, "uniform")]
@@ -667,7 +660,7 @@ def build_page(bench, latency, machine, command, src_sha, res_sha):
         rk.variants(ladder(d, "ms-d", 1000), ladder(d, "ms-t", 640), ladder(d, "ms-p", 300)),
         Raw(f"Lookups of keys that are absent, random keys, {load_pct(d['lat_load'])} load. Each sample times a "
             f"batch of {lc['batch']} lookups and divides by {lc['batch']}, because one lookup is shorter than the "
-            f"{lc['clock_tick_ns']:.0f}{THIN}ns clock tick; resolution is about {d['resolution']:.1f}{THIN}ns per "
+            f"{rk.num(format(lc['clock_tick_ns'], '.0f'), 'ns')} clock tick; resolution is about {rk.num(format(d['resolution'], '.1f'), 'ns')} per "
             f"lookup, and batching hides single-lookup outliers. {lc['batches']:,} batches per pass; each percentile "
             f"is the median across {d['passes']} passes.{R('E3')}"),
         question="How bad is the tail when the key is not there?",
@@ -750,9 +743,9 @@ def build_page(bench, latency, machine, command, src_sha, res_sha):
         ("Repetitions", f"{n} per benchmark" + (f" ({d['n_max']} for some)" if d["n_max"] != n else "")),
         ("Aggregation", "median across repetitions; min and max shown as band or whiskers; wall-clock time"),
         ("Latency timer", f"std::chrono::steady_clock around {lc['batch']}-lookup batches; tick "
-                          f"{lc['clock_tick_ns']:.0f} ns; {lc['batches']:,} batches × {d['passes']} passes; "
+                          f"{rk.num(format(lc['clock_tick_ns'], '.0f'), 'ns')}; {lc['batches']:,} batches × {d['passes']} passes; "
                           f"percentiles per pass (nearest rank), median across passes"),
-        ("Load average", f"{lb} before, {la} after (1 / 5 / 15 min)" if lb and la else lb),
+        ("Load average", f"{lb} before, {la} after (1 / 5 / {rk.num(15, 'min')})" if lb and la else lb),
         ("Run date", ctx["date"][:10]),
     ])
     method_sec = rk.section("methodology", "Methodology", method, eyebrow="Conditions")

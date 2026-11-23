@@ -11,7 +11,7 @@
   "unit": "ns",
   "higher_is_better": false
  },
- "takeaway": "SwissMap median lookup 3.6 ns at 70% load vs 14.6 ns for std::unordered_map (median of 10 runs).",
+ "takeaway": "SwissMap median lookup 3.6 ns at 70% load vs 14.6 ns for std::unordered_map (median of 10 runs).",
  "chart": {
   "type": "interval",
   "x_label": "Successful lookup at load 0.70, min / median / max of 10 runs",
