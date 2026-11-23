@@ -2,7 +2,7 @@
 benchmark JSON in results/. Standard library only.
 
 The page loads the vendored kit from site/kit/ (copied by
-/Users/allenwang/Desktop/report-design-system/kit/sync-kit.sh; never edit it)
+report-design-system/kit/sync-kit.sh; never edit it)
 and draws its charts client-side from one inline JSON block. Every number on
 the page is computed here from results/*.json.
 
