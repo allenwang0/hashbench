@@ -27,7 +27,7 @@ OPEN_TABLES = TABLES[:3]
 # because yellow sits too close to the orange baseline (validated in
 # LOCAL_CSS below).
 COLORS = {"SwissMap": "var(--series-1)", "std::unordered_map": "var(--series-2)",
-          "LinearMap": "var(--hb-3)", "RobinHoodMap": "var(--hb-4)"}
+          "LinearMap": "var(--series-3)", "RobinHoodMap": "var(--hb-4)"}
 ORDER = ["SwissMap", "std::unordered_map", "LinearMap", "RobinHoodMap"]
 CARD_LOAD = 0.70
 LOADS = ["0.25", "0.50", "0.70", "0.85"]
@@ -240,13 +240,12 @@ def build_card(latency, command, sha, generated_at):
 # ---------- page ----------
 
 LOCAL_CSS = """
-/* hashbench local styles (report.local). Fourth/third series colours:
-   kit report.css v1.0.0 does not define --series-3/4, and kit slot 4 (yellow)
-   is within dE 14 of the orange baseline, so this report uses aqua + magenta.
+/* hashbench local styles (report.local). Fourth series colour: kit slot 4 (yellow)
+   is within dE 14 of the orange baseline, so this report uses magenta instead.
    Validated with the dataviz palette validator, all pairs, light and dark. */
-:root{--hb-3:#1baf7a;--hb-4:#c2449a}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--hb-3:#199e70;--hb-4:#c255b0}}
-:root[data-theme="dark"]{--hb-3:#199e70;--hb-4:#c255b0}
+:root{--hb-4:#c2449a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--hb-4:#c255b0}}
+:root[data-theme="dark"]{--hb-4:#c255b0}
 .hb-pair{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:8px}
 .hb-pair h4{font-size:14px;font-weight:600;color:var(--ink-2);margin:12px 0 0}
 .hb-pair .legend{display:none}
@@ -256,9 +255,6 @@ LOCAL_CSS = """
 .hero .caveat{margin-top:24px;max-width:720px}
 .paired .track .b{min-width:4px}
 h1,h2,h3{overflow-wrap:break-word}
-/* Kit charts.js never draws narrower than 260 px; at 320 px the figure's inner
-   width is ~246 px, so the SVG would scale down below 11 px text. */
-@media (max-width:359px){.figure{padding-left:12px;padding-right:12px}}
 """
 
 LOCAL_JS = r"""
@@ -338,8 +334,7 @@ def two_panel_figure(fid, title, sub, extra_controls=""):
     <div><h4>Sequential keys</h4><div id="{fid}-sequential"></div></div>
   </div>
   <div id="{fid}-table" hidden></div>
-  <div class="toolbar">{view}</div>
-</figure>"""
+  <div class="toolbar">{view}</div>"""  # caller adds the figcaption and closes </figure>
 
 
 def card(label, value, unit, cmp, foot, href):
@@ -526,6 +521,7 @@ def build_page(bench, latency, machine, command, sha, generated_at):
     {two_panel_figure("f-lookup", lookup_fig, f"Median ns per lookup · {slots:,} slots · {reps} runs per point", lookup_op_seg)}
     <p class="vh" aria-live="polite" id="lookup-live"></p>
     <figcaption>Lines are medians of {reps} repetitions; shaded bands span ±1 standard deviation, cut off at the fastest repetition. Lower is better. LinearMap stops at {pct(L)} because that is its maximum load.</figcaption>
+    </figure>
   </section>
 
   <section class="s wrap" id="churn" aria-labelledby="h-churn">
@@ -534,6 +530,7 @@ def build_page(bench, latency, machine, command, sha, generated_at):
     <p class="lede">libc++ hashes an integer to itself, so consecutive keys land in consecutive buckets with no collisions. The open-addressing maps scramble keys on purpose, which costs them that free spread. On random keys at {pct(L)} full, an erase plus insert costs {f3(ch_uni_s)} ns in SwissMap and {f3(ch_uni_b)} ns in {B}.</p>
     {two_panel_figure("f-churn", churn_fig, f"Median ns per erase + insert · {reps} runs per point")}
     <figcaption>Each operation erases one key and inserts a new one, keeping the load roughly constant. Lines are medians; bands span ±1 standard deviation, cut off at the fastest run. At {pct('0.85')}, RobinHoodMap takes {f3(rh85)} ns on random keys.{grew_note}</figcaption>
+    </figure>
   </section>
 
   <section class="s wrap" id="insert" aria-labelledby="h-insert">
@@ -542,6 +539,7 @@ def build_page(bench, latency, machine, command, sha, generated_at):
     <p class="lede">Each run starts from an empty table and includes every resize. {B} allocates a node for every entry, and its cost per random-key insert climbs from {f3(std_ins[0])} ns at {fmt_count(params(st, "insert", "uniform")[0])} keys to {f3(ins_b)} ns at {fmt_count(big)}. {seq_ins_note}</p>
     {two_panel_figure("f-insert", insert_fig, f"Median ns per insert, resizes included · {reps} runs per point")}
     <figcaption>The x axis doubles 3 times between ticks (1K to 4M keys, log scale). Lines are medians; bands span ±1 standard deviation, cut off at the fastest run.</figcaption>
+    </figure>
   </section>
 
   <section class="s wrap" id="latency" aria-labelledby="h-lat">
@@ -552,8 +550,8 @@ def build_page(bench, latency, machine, command, sha, generated_at):
       <div class="fig-head"><div><h3 id="f-lat-h">{lat_fig}</h3><p class="sub">ns per lookup, batch means · {lc['batches']:,} batches · resolution about {quantum:.1f} ns</p></div></div>
       <div id="lat-plot"></div><div id="lat-table" hidden></div>
       <div class="toolbar"><div class="seg" role="radiogroup" aria-label="View" data-view-toggle><button role="radio" aria-checked="true" data-value="chart">Chart</button><button role="radio" aria-checked="false" data-value="table">Table</button></div></div>
-    </figure>
     <figcaption>Each line runs from p50 (filled dot) to p99 (ring); p90 is in the table and tooltip. Best of {lc['passes']} pass{'es' if lc['passes'] != 1 else ''} by median.</figcaption>
+    </figure>
     <p class="caveat"><b>Batch means.</b> Each sample is the mean of {lc['batch']} lookups, so a single slow lookup is diluted. The true single-lookup tail is longer than shown.</p>
   </section>
 
