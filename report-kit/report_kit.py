@@ -379,7 +379,7 @@ def ladder_chart(rows, *, uid, width, title, desc, series, points, domain, axis_
     for label, shape in key:
         tw = text_width(label, 12)
         parts.append(svg_text(kx, 16, label, "c-title", "end"))
-        cx = kx - tw - 9
+        cx = kx - tw - 12
         parts.append(f'<circle cx="{coord(cx)}" cy="12" {marker[shape]}/>')
         kx = cx - 16
     for i, row in enumerate(rows):
