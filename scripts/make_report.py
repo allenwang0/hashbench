@@ -323,7 +323,7 @@ def ladder(d, uid, width):
     kx = plot_r + 40
     for label, shape in (("p99", "ring"), ("p90", "small"), ("p50", "dot")):
         parts.append(rk.svg_text(kx, 14, label, "c-title", "end"))
-        cx = kx - rk.text_width(label, 12) - 9
+        cx = kx - rk.text_width(label, 12) - 12
         parts.append({"ring": f'<circle cx="{rk.coord(cx)}" cy="10" r="4" class="c-stroke-muted" stroke-width="1.5"/>',
                       "small": f'<circle cx="{rk.coord(cx)}" cy="10" r="3" class="c-muted"/>',
                       "dot": f'<circle cx="{rk.coord(cx)}" cy="10" r="4.5" class="c-muted"/>'}[shape])
@@ -620,10 +620,8 @@ def build_page(bench, latency, machine, command, src_sha, res_sha):
     always = all(t == SUBJECT for t in d["fastest_at"].values())
     lo_load, hi_load = loads[0], loads[-1]
     curve = d["sw_curve"]
-    take1 = (f"{SUBJECT} has the lowest median at every load, rising from {ns(curve[0])} at {load_pct(lo_load)} "
-             f"to {ns(curve[-1])} at {load_pct(hi_load)}" if always else
-             f"{SUBJECT}'s median rises from {ns(curve[0])} at {load_pct(lo_load)} to {ns(curve[-1])} at "
-             f"{load_pct(hi_load)}")
+    take1 = (f"{SUBJECT}'s median rises only from {ns(curve[0])} to {ns(curve[-1])} between {load_pct(lo_load)} "
+             f"and {load_pct(hi_load)} full")
     head1 = (f"{SUBJECT} has the fastest lookups at every load tested" if always
              else "Lookup time by load factor")
     std_band = [d["reps"][("lookup_hit", BASELINE, "uniform", p)] for p in loads]
