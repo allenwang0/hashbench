@@ -27,4 +27,4 @@ loadavg > results/raw/load_before.txt
 loadavg > results/raw/load_after.txt
 
 python3 scripts/collect_results.py results/raw results
-python3 scripts/make_report.py --results results --site site --command "scripts/run_bench.sh"
+python3 scripts/make_report.py --results results --site site --command "scripts/run_bench.sh" --readme README.md
