@@ -5,19 +5,36 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   format:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # make_report.py names the commit that last changed results/
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install -r requirements-dev.txt
       - name: clang-format
         run: clang-format --dry-run --Werror include/hashbench/*.h tests/*.cpp tests/*.h bench/*.cpp bench/*.h
-      - name: Report smoke tests
+      - name: Report kit matches its pinned hashes
+        run: python report-kit/check_kit.py
+      - name: Committed report, card and README block are current
+        run: |
+          python scripts/make_report.py --results results --site site --command scripts/run_bench.sh --readme README.md
+          git diff --exit-code -- site README.md
+      - name: Report tests (numbers recomputed from results/)
         run: python -m unittest discover -s scripts -p "test_*.py"
+      # Pages publishes site/ as committed: the report built from the committed
+      # results (repeated runs on a named machine), never a CI-runner benchmark.
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          path: site
 
   build-test:
     name: ${{ matrix.name }} ${{ matrix.preset }}
@@ -46,3 +63,17 @@ jobs:
         run: cmake --build --preset ${{ matrix.preset }}
       - name: Test
         run: ctest --preset ${{ matrix.preset }}
+
+  deploy-pages:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [format, build-test]
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
