@@ -2,7 +2,7 @@
  "schema_version": 1,
  "repo": "hashbench",
  "sha": "0836fb6e9cc07ae951925c5ba0960d9d339037e6",
- "generated_at": "2026-11-12T05:47:26Z",
+ "generated_at": "2026-11-23T04:35:00Z",
  "command": "scripts/run_bench.sh",
  "data_note": "Synthetic keys from a fixed seed (20261110), 1048576 slots, uniform 64-bit keys, one machine.",
  "metric": {

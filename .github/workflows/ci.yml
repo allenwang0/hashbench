@@ -46,3 +46,35 @@ jobs:
         run: cmake --build --preset ${{ matrix.preset }}
       - name: Test
         run: ctest --preset ${{ matrix.preset }}
+
+  pages-build:
+    name: Build report
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Rebuild site/ from the committed results
+        run: |
+          sha=$(python3 -c 'import json; print(json.load(open("site/card.json"))["sha"])')
+          python3 scripts/make_report.py --results results --site site --command scripts/run_bench.sh --sha "$sha"
+          test -f site/kit/report.css && test -f site/kit/charts.js && test -f site/kit/report.js
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  pages-deploy:
+    name: Deploy report to GitHub Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: pages-build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
